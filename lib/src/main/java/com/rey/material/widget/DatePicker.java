@@ -594,16 +594,16 @@ public class DatePicker extends ListView implements AbsListView.OnScrollListener
                     mTouchedDay = getTouchedDay(event.getX(), event.getY());
                     return true;
                 case MotionEvent.ACTION_UP:
-                    if(getTouchedDay(event.getX(), event.getY()) == mTouchedDay && mTouchedDay>0) {
+                    if(getTouchedDay(event.getX(), event.getY()) == mTouchedDay && mTouchedDay > 0) {
                         mAdapter.setDate(mTouchedDay, mMonth, mYear, true);
+                        mTouchedDay = -1;
                     }
                     return true;
                 case MotionEvent.ACTION_CANCEL:
                     mTouchedDay = -1;
-                    break;
+                    return true;
             }
-
-            return false;
+            return true;
         }
 
         private void resetAnimation(){

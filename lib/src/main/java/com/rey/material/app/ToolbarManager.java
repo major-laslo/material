@@ -235,8 +235,7 @@ public class ToolbarManager {
             mToolbar.getViewTreeObserver().removeGlobalOnLayoutListener(mOnGlobalLayoutListener);
 
         ActionMenuView menuView = getMenuView();
-
-        for(int i = 0; i < menuView.getChildCount(); i++){
+        for(int i = 0, count = menuView == null ? 0 : menuView.getChildCount(); i < count; i++){
             View child = menuView.getChildAt(i);
             if(mRippleStyle != 0){
                 if(child.getBackground() == null || !(child.getBackground() instanceof ToolbarRippleDrawable))
@@ -255,7 +254,7 @@ public class ToolbarManager {
 
     private void animateOut(){
         ActionMenuView menuView = getMenuView();
-        int count = menuView.getChildCount();
+        int count = menuView == null ? 0 : menuView.getChildCount();
         Animation slowestAnimation = null;
         mAnimations.clear();
         mAnimations.ensureCapacity(count);
@@ -287,7 +286,7 @@ public class ToolbarManager {
     private void animateIn(){
         ActionMenuView menuView = getMenuView();
 
-        for(int i = 0, count = menuView.getChildCount(); i < count; i++){
+        for(int i = 0, count = menuView == null ? 0 : menuView.getChildCount(); i < count; i++){
             View child = menuView.getChildAt(i);
             Animation anim = mAnimator.getInAnimation(child, i);
             if(anim != null)
@@ -313,12 +312,12 @@ public class ToolbarManager {
 
         @Override
         public Animation getOutAnimation(View v, int position) {
-            return AnimationUtils.loadAnimation(v.getContext(), mAnimationOut);
+            return mAnimationOut == 0 ? null : AnimationUtils.loadAnimation(v.getContext(), mAnimationOut);
         }
 
         @Override
         public Animation getInAnimation(View v, int position) {
-            return AnimationUtils.loadAnimation(v.getContext(), mAnimationIn);
+            return mAnimationIn == 0 ?  null : AnimationUtils.loadAnimation(v.getContext(), mAnimationIn);
         }
     }
 

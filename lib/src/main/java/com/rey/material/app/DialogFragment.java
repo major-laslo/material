@@ -12,6 +12,11 @@ import android.view.View;
 public class DialogFragment extends android.support.v4.app.DialogFragment{
 
     public interface Builder{
+        /**
+         * Get a Dialog instance used for this fragment.
+         * @param context A Context instance.
+         * @return The Dialog will be used for this fragment.
+         */
         public com.rey.material.app.Dialog build(Context context);
 
         /**
@@ -61,7 +66,7 @@ public class DialogFragment extends android.support.v4.app.DialogFragment{
         com.rey.material.app.Dialog dialog = mBuilder == null ? new Dialog(getActivity()) : mBuilder.build(getActivity());
         dialog.positiveActionClickListener(mActionListener)
                 .negativeActionClickListener(mActionListener)
-                .negativeActionClickListener(mActionListener);
+                .neutralActionClickListener(mActionListener);
         return dialog;
     }
 

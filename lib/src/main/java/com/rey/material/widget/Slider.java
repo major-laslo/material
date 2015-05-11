@@ -80,8 +80,23 @@ public class Slider extends View{
     private ThumbStrokeAnimator mThumbStrokeAnimator;
     private ThumbMoveAnimator mThumbMoveAnimator;
 
+    private boolean mIsRtl = false;
+
+    /**
+     * Interface definition for a callback to be invoked when thumb's position changed.
+     */
     public interface OnPositionChangeListener{
-        public void onPositionChanged(Slider view, float oldPos, float newPos, int oldValue, int newValue);
+        /**
+         * Called when thumb's position changed.
+         *
+         * @param view The view fire this event.
+         * @param fromUser Indicate the change is from user touch event or not.
+         * @param oldPos The old position of thumb.
+         * @param newPos The new position of thumb.
+         * @param oldValue The old value.
+         * @param newValue The new value.
+         */
+        public void onPositionChanged(Slider view, boolean fromUser, float oldPos, float newPos, int oldValue, int newValue);
     }
 
     private OnPositionChangeListener mOnPositionChangeListener;
@@ -202,6 +217,32 @@ public class Slider extends View{
         return mValueText;
     }
 
+    public int getMinValue(){
+        return mMinValue;
+    }
+
+    public int getMaxValue(){
+        return mMaxValue;
+    }
+
+    public int getStepValue(){
+        return mStepValue;
+    }
+
+    public void setValueRange(int min, int max, boolean animation){
+        if(max < min || (min == mMinValue && max == mMaxValue))
+            return;
+
+        float oldValue = getExactValue();
+        float oldPosition = getPosition();
+        mMinValue = min;
+        mMaxValue = max;
+
+        setValue(oldValue, animation);
+        if(mOnPositionChangeListener != null && oldPosition == getPosition() && oldValue != getExactValue())
+            mOnPositionChangeListener.onPositionChanged(this, false, oldPosition, oldPosition, Math.round(oldValue), getValue());
+    }
+
     public int getValue(){
         return Math.round(getExactValue());
     }
@@ -215,10 +256,10 @@ public class Slider extends View{
     }
 
     public void setPosition(float pos, boolean animation){
-        setPosition(pos, animation, animation);
+        setPosition(pos, animation, animation, false);
     }
 
-    private void setPosition(float pos, boolean moveAnimation, boolean transformAnimation){
+    private void setPosition(float pos, boolean moveAnimation, boolean transformAnimation, boolean fromUser){
         boolean change = getPosition() != pos;
         int oldValue = getValue();
         float oldPos = getPosition();
@@ -242,7 +283,7 @@ public class Slider extends View{
         float newPos = getPosition();
 
         if(change && mOnPositionChangeListener != null)
-            mOnPositionChangeListener.onPositionChanged(this, oldPos, newPos, oldValue, newValue);
+            mOnPositionChangeListener.onPositionChanged(this, fromUser, oldPos, newPos, oldValue, newValue);
     }
 
     public void setValue(float value, boolean animation){
@@ -313,6 +354,15 @@ public class Slider extends View{
     }
 
     @Override
+    public void onRtlPropertiesChanged(int layoutDirection) {
+        boolean rtl = layoutDirection == LAYOUT_DIRECTION_RTL;
+        if(mIsRtl != rtl) {
+            mIsRtl = rtl;
+            invalidate();
+        }
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         mDrawRect.left = getPaddingLeft() + mThumbRadius;
         mDrawRect.right = w - getPaddingRight() - mThumbRadius;
@@ -375,7 +425,7 @@ public class Slider extends View{
         int valueOffset = Math.round(totalOffset * position);
         int stepOffset = valueOffset / mStepValue;
         int lowerValue = stepOffset * mStepValue;
-        int higherValue = Math.min(mMaxValue, (stepOffset + 1) * mStepValue);
+        int higherValue = Math.min(totalOffset, (stepOffset + 1) * mStepValue);
 
         if(valueOffset - lowerValue < higherValue - valueOffset)
             position = lowerValue / (float)totalOffset;
@@ -393,24 +443,29 @@ public class Slider extends View{
         if(!isEnabled())
             return false;
 
+        float x = event.getX();
+        float y = event.getY();
+        if(mIsRtl)
+            x = 2 * mDrawRect.centerX() - x;
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mIsDragging = isThumbHit(event.getX(), event.getY(), mThumbRadius) && !mThumbMoveAnimator.isRunning();
-                mMemoPoint.set(event.getX(), event.getY());
+                mIsDragging = isThumbHit(x, y, mThumbRadius) && !mThumbMoveAnimator.isRunning();
+                mMemoPoint.set(x, y);
                 if(mIsDragging)
                     mThumbRadiusAnimator.startAnimation(mDiscreteMode ? 0 : mThumbFocusRadius);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(mIsDragging) {
                     if(mDiscreteMode) {
-                        float position = correctPosition(Math.min(1f, Math.max(0f, (event.getX() - mDrawRect.left) / mDrawRect.width())));
-                        setPosition(position, true);
+                        float position = correctPosition(Math.min(1f, Math.max(0f, (x - mDrawRect.left) / mDrawRect.width())));
+                        setPosition(position, true, true, true);
                     }
                     else{
-                        float offset = (event.getX() - mMemoPoint.x) / mDrawRect.width();
+                        float offset = (x - mMemoPoint.x) / mDrawRect.width();
                         float position = Math.min(1f, Math.max(0f, mThumbPosition + offset));
-                        setPosition(position, false, true);
-                        mMemoPoint.x = event.getX();
+                        setPosition(position, false, true, true);
+                        mMemoPoint.x = x;
                         invalidate();
                     }
                 }
@@ -418,17 +473,17 @@ public class Slider extends View{
             case MotionEvent.ACTION_UP:
                 if(mIsDragging) {
                     mIsDragging = false;
-                    setPosition(getPosition(), true);
+                    setPosition(getPosition(), true, true, true);
                 }
-                else if(distance(mMemoPoint.x, mMemoPoint.y, event.getX(), event.getY()) <= mTouchSlop){
-                    float position = correctPosition(Math.min(1f, Math.max(0f, (event.getX() - mDrawRect.left) / mDrawRect.width())));
-                    setPosition(position, true);
+                else if(distance(mMemoPoint.x, mMemoPoint.y, x, y) <= mTouchSlop){
+                    float position = correctPosition(Math.min(1f, Math.max(0f, (x - mDrawRect.left) / mDrawRect.width())));
+                    setPosition(position, true, true, true);
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
                 if(mIsDragging) {
                     mIsDragging = false;
-                    setPosition(getPosition(), true);
+                    setPosition(getPosition(), true, true, true);
                 }
                 break;
         }
@@ -588,16 +643,19 @@ public class Slider extends View{
         super.draw(canvas);
 
         float x = mDrawRect.width() * mThumbPosition + mDrawRect.left;
+        if(mIsRtl)
+            x = 2 * mDrawRect.centerX() - x;
         float y = mDrawRect.centerY();
         int filledPrimaryColor = ColorUtil.getMiddleColor(mSecondaryColor, isEnabled() ? mPrimaryColor : mSecondaryColor, mThumbFillPercent);
 
         getTrackPath(x, y, mThumbCurrentRadius);
         mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(mSecondaryColor);
+        mPaint.setColor(mIsRtl ? filledPrimaryColor : mSecondaryColor);
         canvas.drawPath(mRightTrackPath, mPaint);
-        mPaint.setColor(filledPrimaryColor);
+        mPaint.setColor(mIsRtl ? mSecondaryColor : filledPrimaryColor);
         canvas.drawPath(mLeftTrackPath, mPaint);
 
+        mPaint.setColor(filledPrimaryColor);
         if(mDiscreteMode){
             float factor = 1f - mThumbCurrentRadius / mThumbRadius;
 

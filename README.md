@@ -1,9 +1,8 @@
 Material
 =====================
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.github.rey5137/material.svg)](https://oss.sonatype.org/content/repositories/releases/com/github/rey5137/material/1.1.0/material-1.1.0.aar)  [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Material-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1685)
-
 MaterialLibrary is an Open Source Android library that back-port Material Design components to pre-Lolipop Android. MaterialLibrary's original author is [Rey Pham](https://github.com/rey5137).
+This is a fork for creating artifacts with bug fixes faster.
 
 * [Features](#features)
 * [Demo](#demo)
@@ -75,7 +74,7 @@ Add Gradle dependency:
 
 ```gradle
 dependencies {
-   compile 'com.github.rey5137:material:1.1.0'
+   compile(group: 'com.levi9.lmajor', name: 'materialLib', version: '1.1.2', ext: 'aar')
 }
 ```
 
@@ -86,8 +85,8 @@ AppCompat and CardView library is required by Material library.
 
 ```gradle
 dependencies {
-   compile 'com.android.support:appcompat-v7:21.0.2'
-   compile 'com.android.support:cardview-v7:21.0.3'
+   compile 'com.android.support:appcompat-v7:22.1.1'
+   compile 'com.android.support:cardview-v7:22.1.1'
 }
 ```
 Now you can use any widget in **com.rey.material.widget** package as you wish. For styling, please view [Wiki](https://github.com/rey5137/Material/wiki).
